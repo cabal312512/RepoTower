@@ -107,6 +107,21 @@ impl App {
             .find(contains)
             .map(|n| n.id.clone())
     }
+    fn move_drag(&mut self, at: Pos2) {
+        let Some(drag) = &mut self.drag else { return };
+        if (at - drag.start).length() > 3.0 {
+            drag.moved = true;
+        }
+        if drag.moved {
+            let delta = at - drag.last;
+            if let Some(id) = &drag.node {
+                *self.offsets.entry(id.clone()).or_default() += delta / self.camera.scale;
+            } else {
+                self.camera.offset += delta;
+            }
+        }
+        drag.last = at;
+    }
     fn graph_input(&mut self, ctx: &Context, rect: Rect) {
         let has_report = self.simulation.report().is_some();
         let input_rect = Rect::from_min_max(
@@ -117,126 +132,150 @@ impl App {
             rect.right_bottom() - vec2(112.0, if has_report { 115.0 } else { 50.0 }),
             vec2(100.0, 35.0),
         );
-        let pointer = ctx.input(|i| i.pointer.clone());
+        let inside = |p: Pos2| input_rect.contains(p) && !zoom_rect.contains(p);
         let now = ctx.input(|i| i.time);
-        let point = pointer.interact_pos();
-        let inside = point.is_some_and(|p| input_rect.contains(p) && !zoom_rect.contains(p));
-        if pointer.any_pressed() && (!inside || self.popup.is_some()) {
+        if self.popup.is_some() || self.error.is_some() {
+            self.hovered = None;
+            self.hover_candidate = None;
+            self.drag = None;
             self.last_node_click = None;
+            return;
         }
-        if self.popup.is_none() && self.error.is_none() {
-            if let Some(at) = point {
-                if inside && self.drag.is_none() {
-                    let wheel = ctx.input(|i| i.raw_scroll_delta.y);
-                    if wheel != 0.0 {
-                        self.camera.zoom((wheel * 0.0015).exp(), at - rect.min);
+        // Preserve event order: a slow frame can contain a complete drag or both clicks.
+        for event in ctx.input(|i| i.raw.events.clone()) {
+            match event {
+                Event::PointerMoved(at) => self.move_drag(at),
+                Event::PointerButton {
+                    pos: at,
+                    button,
+                    pressed: true,
+                    ..
+                } => {
+                    if !inside(at) {
+                        self.last_node_click = None;
+                        continue;
                     }
-                }
-                let target = if inside {
-                    self.hit_node(at, rect.min)
-                } else {
-                    None
-                };
-                if inside && self.drag.is_none() {
-                    for button in [
-                        PointerButton::Primary,
-                        PointerButton::Secondary,
-                        PointerButton::Middle,
-                    ] {
-                        if pointer.button_pressed(button) {
-                            if button == PointerButton::Secondary && self.view == View::All {
-                                if let Some(id) = &target {
-                                    self.select(Some(id.clone()));
-                                    self.z_order.retain(|other| other != id);
-                                    self.z_order.push(id.clone());
-                                }
-                            }
-                            self.drag = Some(Drag {
-                                start: at,
-                                last: at,
-                                button,
-                                node: if button == PointerButton::Secondary
-                                    && self.view == View::All
-                                {
-                                    target.clone()
-                                } else {
-                                    None
-                                },
-                                moved: false,
-                            });
-                            break;
-                        }
-                    }
-                }
-                if let Some(mut drag) = self.drag.take() {
-                    if (at - drag.start).length() > 3.0 {
-                        drag.moved = true;
-                    }
-                    if drag.moved {
-                        let delta = at - drag.last;
-                        if let Some(id) = &drag.node {
-                            *self.offsets.entry(id.clone()).or_default() +=
-                                delta / self.camera.scale;
-                        } else {
-                            self.camera.offset += delta;
-                        }
-                        ctx.set_cursor_icon(CursorIcon::Grabbing);
-                    }
-                    drag.last = at;
-                    if pointer.button_released(drag.button) {
-                        if !drag.moved && drag.button == PointerButton::Primary {
-                            self.select(target.clone());
-                            if let Some(id) = target.clone() {
-                                let double = self.last_node_click.as_ref().is_some_and(
-                                    |(previous, time)| *previous == id && now - *time <= 0.35,
-                                );
-                                self.last_node_click = if double { None } else { Some((id, now)) };
-                                if double {
-                                    self.set_view(View::Nearby);
-                                }
-                            } else {
-                                self.last_node_click = None;
-                            }
-                        } else if !drag.moved
-                            && drag.button == PointerButton::Secondary
-                            && target.is_some()
-                        {
-                            self.toggle(Popup::Positions);
-                        }
-                    } else if pointer.button_down(drag.button) {
-                        self.drag = Some(drag);
-                    }
-                }
-                if self.drag.is_none() {
-                    if self.hover_candidate != target {
-                        self.hover_candidate = target.clone();
-                        self.hover_since = now;
-                        self.hovered = None;
-                    }
-                    let wait = if self.simulation.selected.is_some()
-                        && self.simulation.selected != target
+                    if self.drag.is_some()
+                        || !matches!(
+                            button,
+                            PointerButton::Primary
+                                | PointerButton::Secondary
+                                | PointerButton::Middle
+                        )
                     {
-                        0.35
-                    } else {
-                        0.0
-                    };
-                    if now - self.hover_since >= wait {
-                        self.hovered = target.clone();
-                    } else {
-                        ctx.request_repaint_after(Duration::from_secs_f64(
-                            (wait - (now - self.hover_since)).max(0.001),
-                        ));
+                        continue;
                     }
-                    if target.is_some() {
-                        ctx.set_cursor_icon(CursorIcon::PointingHand);
-                    } else if inside {
-                        ctx.set_cursor_icon(CursorIcon::Grab);
+                    let target = self.hit_node(at, rect.min);
+                    let move_node = button == PointerButton::Secondary && self.view == View::All;
+                    if move_node {
+                        if let Some(id) = &target {
+                            self.select(Some(id.clone()));
+                            self.z_order.retain(|other| other != id);
+                            self.z_order.push(id.clone());
+                        }
+                    }
+                    self.drag = Some(Drag {
+                        start: at,
+                        last: at,
+                        button,
+                        node: if move_node { target } else { None },
+                        moved: false,
+                    });
+                }
+                Event::PointerButton {
+                    pos: at,
+                    button,
+                    pressed: false,
+                    ..
+                } => {
+                    if !self.drag.as_ref().is_some_and(|drag| drag.button == button) {
+                        continue;
+                    }
+                    self.move_drag(at);
+                    let drag = self.drag.take().unwrap();
+                    let target = if inside(at) {
+                        self.hit_node(at, rect.min)
+                    } else {
+                        None
+                    };
+                    if drag.moved {
+                        self.last_node_click = None;
+                    } else if button == PointerButton::Primary {
+                        self.select(target.clone());
+                        if let Some(id) = target {
+                            let double =
+                                self.last_node_click
+                                    .as_ref()
+                                    .is_some_and(|(previous, time)| {
+                                        *previous == id && now - *time <= 0.35
+                                    });
+                            self.last_node_click = if double { None } else { Some((id, now)) };
+                            if double {
+                                self.set_view(View::Nearby);
+                            }
+                        } else {
+                            self.last_node_click = None;
+                        }
+                    } else if button == PointerButton::Secondary
+                        && self.view == View::All
+                        && target.is_some()
+                    {
+                        self.toggle(Popup::Positions);
+                        break;
                     }
                 }
+                Event::PointerGone | Event::WindowFocused(false) => {
+                    self.drag = None;
+                    self.hovered = None;
+                    self.hover_candidate = None;
+                    self.last_node_click = None;
+                }
+                _ => {}
+            }
+        }
+        if self.popup.is_some() {
+            self.hovered = None;
+            self.hover_candidate = None;
+            return;
+        }
+        let point = ctx.input(|i| i.pointer.hover_pos());
+        if let Some(at) = point {
+            if self.drag.is_some() {
+                ctx.set_cursor_icon(CursorIcon::Grabbing);
+                return;
+            }
+            if inside(at) {
+                let wheel = ctx.input(|i| i.raw_scroll_delta.y);
+                if wheel != 0.0 {
+                    self.camera.zoom((wheel * 0.0015).exp(), at - rect.min);
+                }
+            }
+            let target = if inside(at) {
+                self.hit_node(at, rect.min)
             } else {
+                None
+            };
+            if self.hover_candidate != target {
+                self.hover_candidate = target.clone();
+                self.hover_since = now;
                 self.hovered = None;
-                self.hover_candidate = None;
-                self.drag = None;
+            }
+            let wait = if self.simulation.selected.is_some() && self.simulation.selected != target {
+                0.35
+            } else {
+                0.0
+            };
+            if now - self.hover_since >= wait {
+                self.hovered = target.clone();
+            } else {
+                ctx.request_repaint_after(Duration::from_secs_f64(
+                    (wait - (now - self.hover_since)).max(0.001),
+                ));
+            }
+            if target.is_some() {
+                ctx.set_cursor_icon(CursorIcon::PointingHand);
+            } else if inside(at) {
+                ctx.set_cursor_icon(CursorIcon::Grab);
             }
         } else {
             self.hovered = None;

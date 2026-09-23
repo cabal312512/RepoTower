@@ -47,7 +47,7 @@ jobs:
         run: npm ci
       - name: Install Linux window and graphics libraries on the disposable runner
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libwayland-dev libvulkan1 mesa-vulkan-drivers xvfb
+        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libvulkan1 mesa-vulkan-drivers xvfb
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
       - name: Test, build and package native application

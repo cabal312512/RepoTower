@@ -22,12 +22,16 @@ let app = await launch(executable, data);
 async function check(name, fn) { await fn(); checks.push(name); console.log(`PASS ${name}`); }
 const node = id => `node:${id}`;
 const config = 'src/core/config.ts';
-async function drag(id, dx, dy) {
+async function drag(id, dx, dy, coalesced = false) {
   const s = await app.snapshot(); const r = s.controls[node(id)]; assert(r, `Node missing: ${id}`);
   const x = r[0] + r[2] / 2, y = r[1] + r[3] / 2;
-  await app.send({ action: 'button', x, y, button: 'right', down: true });
-  await app.send({ action: 'move', x: x + dx, y: y + dy });
-  await app.send({ action: 'button', x: x + dx, y: y + dy, button: 'right', down: false });
+  const events = [
+    { action: 'button', x, y, button: 'right', down: true },
+    { action: 'move', x: x + dx, y: y + dy },
+    { action: 'button', x: x + dx, y: y + dy, button: 'right', down: false },
+  ];
+  if (coalesced) await app.send({ action: 'events', events });
+  else for (const event of events) await app.send(event);
   return app.snapshot();
 }
 try {
@@ -37,11 +41,11 @@ try {
   await app.screenshot(path.join(runRoot, 'light.png'));
   await check('Selection preserves zoom and pan', async () => { await app.click('zoom-in'); const before = await app.snapshot(); await app.click(node(config)); const after = await app.snapshot(); assert.equal(after.selected, config); assert.deepEqual(after.camera, before.camera); });
   await app.click('fit');
-  await check('Hover preview waits while a node is selected', async () => { const s = await app.snapshot(); const r = s.controls[node('src/core/auth.ts')]; const x = r[0] + r[2]/2, y = r[1] + r[3]/2; await app.send({ action: 'move', x, y }); const first = await app.snapshot(); assert.notEqual(first.hovered, 'src/core/auth.ts'); await delay(410); const after = await app.snapshot(); assert.equal(after.hovered, 'src/core/auth.ts'); assert.equal(after.selected, config); });
-  await check('Right drag moves the file and connected routes', async () => { const before = await app.snapshot(); const original = before.nodes.find(n => n.id === config); const after = await drag(config, 48, 28); const moved = after.nodes.find(n => n.id === config); assert(Math.abs(moved.x - original.x - 48 / before.camera.scale) < 0.1); assert(Math.abs(moved.y - original.y - 28 / before.camera.scale) < 0.1); assert.deepEqual(after.edges, before.edges); assert.deepEqual(after.camera, before.camera); });
+  await check('Hover preview waits while a node is selected', async () => { const s = await app.snapshot(); const r = s.controls[node('src/core/auth.ts')]; const x = r[0] + r[2]/2, y = r[1] + r[3]/2; const first = (await app.send({ action: 'move', x, y })).state; assert.notEqual(first.hovered, 'src/core/auth.ts'); await delay(410); const after = await app.snapshot(); assert.equal(after.hovered, 'src/core/auth.ts'); assert.equal(after.selected, config); });
+  await check('Right drag moves the file and connected routes', async () => { const before = await app.snapshot(); const original = before.nodes.find(n => n.id === config); const after = await drag(config, 48, 28); const moved = after.nodes.find(n => n.id === config); assert(Math.abs(moved.x - original.x - 48 / before.camera.scale) < 0.1); assert(Math.abs(moved.y - original.y - 28 / before.camera.scale) < 0.1); assert.deepEqual(after.edges, before.edges); assert.deepEqual(after.camera, before.camera); const fast = await drag(config, -18, -11, true); const fastNode = fast.nodes.find(n=>n.id===config); assert(Math.abs(fastNode.x-original.x-30/before.camera.scale)<0.1); assert(Math.abs(fastNode.y-original.y-17/before.camera.scale)<0.1); assert.deepEqual(fast.camera,before.camera); assert.deepEqual(fast.edges,before.edges); });
   await check('Reset selected position leaves other positions intact', async () => { await drag('src/utils/format.ts', 15, -18); const second = (await app.snapshot()).nodes.find(n => n.id === 'src/utils/format.ts'); await app.click(node(config)); await app.click('positions'); await app.click('reset-selected-position'); const reset = await app.snapshot(); assert.equal(reset.nodes.find(n => n.id === config).x, 44); assert.deepEqual(reset.nodes.find(n => n.id === 'src/utils/format.ts'), second); });
   await check('Reset all positions restores the remaining moved file', async () => { await app.click('positions'); await app.click('reset-all-positions'); assert.equal((await app.snapshot()).nodes.find(n => n.id === 'src/utils/format.ts').x, 44); });
-  await check('Double-click opens Nearby and returning restores the camera', async () => { const before = await app.snapshot(); const r = before.controls[node(config)]; const x = r[0]+r[2]/2, y=r[1]+r[3]/2; await delay(500); await app.clickAt(x,y); await app.clickAt(x,y); const s = await app.snapshot(); assert.equal(s.view, 'Nearby'); assert.equal(s.nodes.length, 3); await app.click('view-all'); assert.deepEqual((await app.snapshot()).camera, before.camera); });
+  await check('Double-click opens Nearby and returning restores the camera', async () => { const before = await app.snapshot(); const r = before.controls[node(config)]; const x = r[0]+r[2]/2, y=r[1]+r[3]/2; await delay(500); await app.send({action:'events',events:[true,false,true,false].map(down=>({action:'button',x,y,button:'left',down}))}); const s = await app.snapshot(); assert.equal(s.view, 'Nearby'); assert.equal(s.nodes.length, 3); await app.click('view-all'); assert.deepEqual((await app.snapshot()).camera, before.camera); });
   await check('Disconnect follows real dependency waves', async () => { await app.click('file-action'); await app.click('play'); const s = await app.snapshot(); assert.equal(s.view, 'Impact'); assert.equal(s.report.totalAffected, 13); assert.deepEqual(s.report.waves.map(w=>w.length), [1,2,4,3,2,1,1]); assert.equal(s.nodes.length,14); assert.equal(s.playing,false); });
   await check('Step, scrub and complete preserve the cut', async () => { await app.click('next'); assert((await app.snapshot()).playhead >= 1); const s = await app.snapshot(), r=s.controls.scrub; await app.clickAt(r[0]+r[2]*0.5,r[1]+r[3]/2); assert(Math.abs((await app.snapshot()).playhead-3)<0.1); await app.click('skip'); const done = await app.snapshot(); assert.equal(done.unavailable.length,14); assert.deepEqual(done.origins,[config]); assert.equal(done.live,false); });
   await app.send({ action: 'move', x: 400, y: 90 });

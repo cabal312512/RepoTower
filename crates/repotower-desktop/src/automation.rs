@@ -51,6 +51,15 @@ impl Automation {
             ..Default::default()
         };
         match command["action"].as_str().unwrap_or("") {
+            "events" => {
+                if let Some(events) = command["events"].as_array() {
+                    for event in events.iter().take(64) {
+                        if event["action"] != "events" {
+                            Self::inject(event, input);
+                        }
+                    }
+                }
+            }
             "move" => input.events.push(Event::PointerMoved(point())),
             "button" => {
                 input.events.push(Event::PointerMoved(point()));

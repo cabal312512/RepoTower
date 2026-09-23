@@ -6,7 +6,7 @@ Build with `node scripts/build-native.mjs`. This prepares verified embedded asse
 
 - Windows 10/11 x64, with a working Direct3D 12 adapter (hardware or supported software adapter). No WebView2 or VC runtime installer is required.
 - macOS 11+ on Apple Silicon or Intel, with Metal support. CI verifies current macOS runners; older supported OS versions have not all been exercised.
-- Linux x64 with glibc compatible with Ubuntu 22.04+, X11 or Wayland, a Vulkan or OpenGL ES 3-capable graphics stack, and xkbcommon. Native folder dialogs use the desktop's XDG portal service. Folder drag-and-drop and the `--project PATH` option can open projects independently of a portal dialog.
+- Linux x64 with glibc compatible with Ubuntu 22.04+, X11 or Wayland, a supported Vulkan or OpenGL ES graphics stack, and xkbcommon. X11 also needs `libxkbcommon-x11` (Ubuntu/Debian package: `libxkbcommon-x11-0`). Native folder dialogs use the desktop's XDG portal service. Folder drag-and-drop and the `--project PATH` option can open projects independently of a portal dialog.
 
 The app needs a writable containing folder for portable data. macOS `.app` bundles keep `runtime-data` beside the bundle. A read-only/translocated macOS bundle must be moved to a normal writable location before use. No automatic fallback writes to AppData or the user's home directory.
 

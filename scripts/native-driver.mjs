@@ -38,9 +38,11 @@ export async function launch(executable, data, args = []) {
   }
   async function snapshot() { return (await send({ action: 'state' })).state; }
   async function clickAt(x, y, button = 'left') {
-    await send({ action: 'move', x, y });
-    await send({ action: 'button', x, y, button, down: true });
-    await send({ action: 'button', x, y, button, down: false });
+    await send({ action: 'events', events: [
+      { action: 'move', x, y },
+      { action: 'button', x, y, button, down: true },
+      { action: 'button', x, y, button, down: false },
+    ] });
     return snapshot();
   }
   async function click(id, button = 'left') {
