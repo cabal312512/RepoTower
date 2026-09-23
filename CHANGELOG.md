@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0
+
+- Replaced Electron/React with a native Rust egui/wgpu desktop application.
+- Linked the existing multi-language analyzer directly into the application.
+- Preserved graph layout, causal animation, camera behavior, drag/reset, cut history and individual restoration.
+- Embedded fonts, sample projects, grammar parsers and license texts; no runtime downloads.
+- Replaced the self-extracting Windows launcher with the actual standalone application binary.
+- Added native GUI interaction checks and screenshots on the release matrix.
+- Retained portable data, English/light defaults, Chinese/Japanese and dark mode.
 ## 0.5.0
 
 First public GitHub release.

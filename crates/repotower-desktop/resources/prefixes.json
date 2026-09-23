@@ -1,0 +1,100 @@
+[
+  [
+    "Python 解析器初始化失败：",
+    {
+      "en": "Could not initialize the Python parser: ",
+      "ja": "Python の解析器を初期化できません: "
+    }
+  ],
+  [
+    "无法读取目录项：",
+    {
+      "en": "Could not read a directory entry: ",
+      "ja": "ディレクトリエントリを読み取れません: "
+    }
+  ],
+  [
+    "忽略规则错误：",
+    {
+      "en": "Ignore rule error: ",
+      "ja": "除外ルールのエラー: "
+    }
+  ],
+  [
+    "为避免越界和循环，已跳过符号链接：",
+    {
+      "en": "Symlink skipped to avoid leaving the project or following a cycle: ",
+      "ja": "プロジェクト外への参照や循環を避けるため、シンボリックリンクをスキップしました: "
+    }
+  ],
+  [
+    "无法读取文件属性：",
+    {
+      "en": "Could not read file metadata: ",
+      "ja": "ファイル属性を読み取れません: "
+    }
+  ],
+  [
+    "文件超过 2 MiB，已跳过：",
+    {
+      "en": "File exceeds 2 MiB and was skipped: ",
+      "ja": "2 MiB を超えるファイルをスキップしました: "
+    }
+  ],
+  [
+    "无法打开项目文件夹：",
+    {
+      "en": "Could not open the project folder: ",
+      "ja": "プロジェクトフォルダーを開けません: "
+    }
+  ],
+  [
+    "文件扫描后变大，已跳过：",
+    {
+      "en": "File grew after scanning and was skipped: ",
+      "ja": "スキャン後にサイズが増えたファイルをスキップしました: "
+    }
+  ],
+  [
+    "文件不是 UTF-8，已跳过：",
+    {
+      "en": "File is not UTF-8 and was skipped: ",
+      "ja": "UTF-8 ではないファイルをスキップしました: "
+    }
+  ],
+  [
+    "无法读取 ",
+    {
+      "en": "Could not read ",
+      "ja": "読み取りに失敗しました: "
+    }
+  ],
+  [
+    "无法解析 ",
+    {
+      "en": "Could not parse ",
+      "ja": "構文解析に失敗しました: "
+    }
+  ],
+  [
+    "无效请求：",
+    {
+      "en": "Invalid request: ",
+      "ja": "無効なリクエスト: "
+    }
+  ],
+  [
+    "无法启动分析引擎：",
+    {
+      "en": "Could not start the analysis engine: ",
+      "ja": "解析エンジンを起動できません: "
+    }
+  ],
+  [
+    "界面文件无法读取。请使用完整的发布目录或先运行构建。",
+    {
+      "en": "Could not read the interface files. Use the complete release folder or build the application first.",
+      "ja": "画面のファイルを読み取れません。リリースフォルダー全体を使用するか、先にアプリケーションをビルドしてください。"
+    }
+  ]
+]

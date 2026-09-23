@@ -1,38 +1,31 @@
-# Downloads and portable data
+# Distribution
 
-Download binaries from [GitHub Releases](https://github.com/cabal312512/RepoTower/releases). Choose the archive for your OS and CPU. Keep the extracted folder together. Source archives require a build and do not contain bundled tools or caches.
+Build with `node scripts/build-native.mjs`. This prepares verified embedded assets, tests the Rust workspace and packages the native binary. `node scripts/distribute.mjs` creates the platform archive and SHA-256 sidecar. On Windows, `node scripts/build-single.mjs` copies the exact same application binary into a standalone download; no launcher or payload is appended.
 
-## Windows
+## Requirements
 
-The portable ZIP contains `RepoTower.exe` and its runtime. The application keeps its writable data in `runtime-data` beside that executable.
+- Windows 10/11 x64, with a working Direct3D 12 adapter (hardware or supported software adapter). No WebView2 or VC runtime installer is required.
+- macOS 11+ on Apple Silicon or Intel, with Metal support. CI verifies current macOS runners; older supported OS versions have not all been exercised.
+- Linux x64 with glibc compatible with Ubuntu 22.04+, X11 or Wayland, a Vulkan or OpenGL ES 3-capable graphics stack, and xkbcommon. Native folder dialogs use the desktop's XDG portal service. Folder drag-and-drop and the `--project PATH` option can open projects independently of a portal dialog.
 
-The single EXE is a self-extracting launcher. Put it in a writable folder, then open it. It checks its embedded archive and unpacks the runtime into `RepoTower-data/app-<content-hash>` beside itself. Preferences and Chromium data live in `RepoTower-data/runtime-data`. Later launches verify and reuse the cache; missing or corrupted cached files are rebuilt. It does not install anything or fall back to the system temporary folder. First launch needs extra time and disk space for the unpacked runtime.
+The app needs a writable containing folder for portable data. macOS `.app` bundles keep `runtime-data` beside the bundle. A read-only/translocated macOS bundle must be moved to a normal writable location before use. No automatic fallback writes to AppData or the user's home directory.
 
-To move the single EXE with your preferences, move its `RepoTower-data` folder too. Close every copy before deleting the cache or replacing files. The folder can be removed to reset all settings. Downloaded binaries are unsigned, so Windows may display a reputation warning.
+## Release files
 
-## macOS
+- Windows x64 standalone `.exe`.
+- Windows x64 `.zip`, including that EXE, documentation and notices.
+- macOS Apple Silicon and Intel `.zip`, each containing a native `.app` and documentation.
+- Linux x64 `.tar.gz`, with an executable and documentation.
+- `SHA256SUMS.txt`, plus GitHub's automatic source ZIP and tar.gz archives.
 
-Choose `arm64` for Apple Silicon or `x64` for Intel. Extract into a writable location and open `RepoTower.app`. Keep the app in its extracted directory so adjacent `runtime-data` can be written. The app is not signed or notarized; macOS may require approval for this specific app in **System Settings → Privacy & Security**. Do not disable system-wide security protections.
+Windows files are unsigned. macOS bundles receive an ad-hoc signature for native execution, but are neither Developer ID signed nor notarized. Operating-system download checks may therefore apply. Checksums are integrity checks, not signing certificates.
 
-## Linux
+## Portable files
 
-Extract the `.tar.gz` and run `./RepoTower`. Use a writable folder and retain executable permissions. Builds use Ubuntu 22.04 with native GTK 3, NSS, ALSA and GBM libraries available. A minimal server environment needs these desktop libraries and a display server; it is not a supported GUI runtime out of the box.
+`runtime-data/preferences.json` stores appearance/language preferences. `runtime-data/examples/VERSION` contains embedded sample code only when a sample is opened. `runtime-data/temp` and `runtime-data/cache` are application-local temporary/cache locations. OS and GPU-driver bookkeeping is outside the app's control.
 
-Linux creates a private, temporary `/tmp/repotower-*` alias to the adjacent temporary directory so Chromium's Unix socket stays within the OS pathname limit. Actual temporary data remains beside the app. The alias is removed on normal exit; an abrupt termination may leave an empty alias directory for the OS to clean up.
+0.5.0's Electron launcher and adjacent `RepoTower-data` remain usable; 0.6.0 does not modify that release or migrate/delete its settings. The old release and Git tag remain available.
 
-## Verify a download
+## Publishing
 
-Compare your result with the matching filename in `SHA256SUMS.txt`:
-
-```powershell
-Get-FileHash .\RepoTower-0.5.0-windows-x64.exe -Algorithm SHA256
-```
-
-```sh
-shasum -a 256 RepoTower-0.5.0-macos-arm64.zip
-sha256sum RepoTower-0.5.0-linux-x64.tar.gz
-```
-
-Checksums are integrity checks, not signatures. The release workflow builds each platform natively and publishes only after all required jobs succeed. A failed or cancelled Actions run does not create a completed release.
-
-Application-controlled caches and settings stay beside the portable app. Operating-system records such as recent-file history, security scans and crash bookkeeping are controlled by the OS.
+The workflow builds and tests Windows x64, macOS arm64/x64 and Linux x64 before creating a new versioned release. The publication job verifies all asset checksums, uploads a draft and publishes only after all uploads succeed. Existing public versions are never replaced. Pull requests build and test without publishing.

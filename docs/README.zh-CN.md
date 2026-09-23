@@ -1,56 +1,42 @@
 # RepoTower
 
-一个离线的桌面依赖分析小工具。选中文件，模拟断开，沿真实连线观察哪些文件可能受到影响。
+一个小巧、离线的 **Rust 原生桌面依赖分析工具**。选中文件，模拟断开，沿真实连线观察哪些文件可能受到影响。
 
 [下载最新版本](https://github.com/cabal312512/RepoTower/releases/latest) · [English](../README.md) · [语言支持与限制](LANGUAGES.md)
 
-![RepoTower 浅色依赖图](images/release-light.png)
+![RepoTower 原生浅色界面](images/release-light.png)
 
-## 下载与使用
+## 下载
 
-| 平台                   | 文件                                       |
-| ---------------------- | ------------------------------------------ |
-| Windows x64 便携文件夹 | `RepoTower-0.5.0-windows-x64-portable.zip` |
-| Windows x64 单文件下载 | `RepoTower-0.5.0-windows-x64.exe`          |
-| macOS Apple Silicon    | `RepoTower-0.5.0-macos-arm64.zip`          |
-| macOS Intel            | `RepoTower-0.5.0-macos-x64.zip`            |
-| Linux x64              | `RepoTower-0.5.0-linux-x64.tar.gz`         |
+| 平台 | 文件 |
+| --- | --- |
+| Windows x64，单文件程序 | `RepoTower-0.6.0-windows-x64.exe` |
+| Windows x64，附带说明文档 | `RepoTower-0.6.0-windows-x64-portable.zip` |
+| macOS Apple Silicon | `RepoTower-0.6.0-macos-arm64.zip` |
+| macOS Intel | `RepoTower-0.6.0-macos-x64.zip` |
+| Linux x64 | `RepoTower-0.6.0-linux-x64.tar.gz` |
 
-便携压缩包需要完整解压再运行。单文件 EXE 首次启动会在旁边创建 `RepoTower-data`，缓存运行文件并保存设置；它是一个文件下载，不是运行后仍只占一个文件。普通文件夹版把设置保存在程序旁的 `runtime-data`。请放在可写目录里。
+Windows 的 EXE 就是程序本身，放在可写文件夹中即可运行。无需安装 Electron、Chromium、WebView2、Node.js 或任何语言开发环境，也不需要解压一套浏览器运行时。字体、示例和语法解析器均已内置，断网可用。
 
-使用时不需要安装 Node、Rust、Python、JDK、Go 或 .NET SDK，不需要网络。新用户默认英文、白天模式；外观菜单可以切换中文、English、日本語和深浅色主题，已有设置会保留。
+程序管理的设置、缓存、临时文件和示例保存在程序旁边的 `runtime-data` 文件夹中；macOS 保存在 `.app` 旁边。操作系统或显卡驱动自身的记录和缓存不由应用控制。
 
-发布页附带 SHA-256 校验和、源码 ZIP 和源码 tar.gz。当前程序没有代码签名，macOS 版本没有公证。详见[下载说明](DISTRIBUTION.md)。
+Release 附带 SHA-256 校验文件和源码压缩包。Windows 文件尚未签名；macOS 使用临时签名，尚未公证。详见[发布说明](DISTRIBUTION.md)。
 
-## 操作
+## 使用
 
-1. 打开或拖入项目文件夹，也可以点击「试试示例」。
-2. 单击文件查看关系，双击进入「相邻」。选择不会重置缩放。
-3. 点击「断开文件」，在「影响路径」中按真实依赖距离观察传播。
-4. 暂停、单步或重播；重新选中任何直接断开的文件都可以「恢复文件」。
+1. 打开或拖入项目文件夹，也可直接试用内置示例。
+2. 点击文件查看引用与使用者。箭头从依赖指向使用它的文件。
+3. 点击“断开文件”，观察影响沿真实依赖连线传播；可以暂停、单步、拖动进度和重播。
+4. 随时重新选中已断开的文件并恢复。多次断开时，恢复其中一个不会错误地消除其他断开的影响。
 
-「全部」中按住鼠标右键拖动文件，线和箭头跟随移动。位置菜单和右键菜单可以分别还原一个文件或全部文件的位置。拖动空白处平移，滚轮缩放，`R` 适应画布，`Esc` 取消选择，`Ctrl/Cmd+Z` 撤销。右上角 `?` 查看操作帮助。
+“全部”视图中，按住鼠标右键拖动节点，连线和箭头跟随。网格按钮可还原选中节点或全部节点的位置。拖动空白平移，滚轮缩放，R 适应画布；点击节点不重置镜头。双击节点进入“相邻”。“影响路径”及其记录菜单可随时回看。
 
-支持 **Java、Python、C、C++、Go、Rust、C#、JavaScript、TypeScript**。解析器内置，支持范围与无法确定的引用见[语言说明](LANGUAGES.md)。
+教程位于 **?** 按钮。设置支持日间 / 夜间、English / 简体中文 / 日本語和减少动态效果。首次打开默认英文、日间模式。
 
-**断开只是只读模拟，不会修改、删除或执行任何源文件。** 箭头从依赖指向使用它的文件；“受影响”表示静态依赖上的潜在影响，不代表一定发生运行故障。类型导入也参与计算。
+支持 JS/TS、Java、Python、C/C++、Go、Rust、C#，无需安装这些语言的 SDK。程序不执行项目源码、不上传仓库，也不会真的删除或修改断开的文件。模拟的是静态依赖上的潜在影响，无法代替运行测试。解析范围与限制见[语言说明](LANGUAGES.md)。
 
-示例有 23 个文件、24 条导入边。断开 `src/core/config.ts` 影响其他 13 个文件，9 个文件仍正常。多次断开后，可通过「影响路径」的下拉框切换记录；逐个恢复会重新计算剩余影响。
+## 开发与旧版
 
-## 从源码构建
+构建需 Rust 1.90、C 编译器和 Node.js 24+。Windows 可运行 `scripts/build.ps1`，工具链和下载缓存均放在项目内。详见[工具链说明](PORTABLE-TOOLCHAIN.md)、[架构](ARCHITECTURE.md)和[验证记录](VALIDATION.md)。
 
-需要 Node.js 24+、Rust 1.90+ 和本机 C 编译器。首次下载依赖需要网络，完成后的应用离线运行。Windows 可通过 `scripts/build.ps1` 使用项目内的便携工具链，详见[构建说明](PORTABLE-TOOLCHAIN.md)。
-
-```sh
-npm ci
-node scripts/build-native.mjs
-node scripts/distribute.mjs
-```
-
-Windows 还可运行 `node scripts/build-single.mjs` 生成单文件下载版。成品和校验和在 `release/artifacts/`。构建工具、依赖、缓存和运行数据不会提交到 Git。
-
-[贡献说明](../CONTRIBUTING.md) · [架构](ARCHITECTURE.md) · [验证记录](VALIDATION.md) · [更新日志](../CHANGELOG.md)
-
-## 许可证
-
-[MIT](../LICENSE)，Copyright © 2026 Cabal and RepoTower contributors。第三方依赖保留各自许可证。
+使用 MIT License。第三方依赖及字体许可证可在设置中查看。旧 Electron 版继续保留在 [v0.5.0](https://github.com/cabal312512/RepoTower/releases/tag/v0.5.0)。

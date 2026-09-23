@@ -2,7 +2,7 @@
 
 # RepoTower
 
-A small, offline desktop tool for exploring source dependencies. Disconnect a file and trace its potential impact through an interactive 2D graph.
+A small, offline **native Rust desktop app** for exploring source dependencies. Disconnect a file and follow its potential impact through an interactive 2D graph.
 
 [![Build](https://github.com/cabal312512/RepoTower/actions/workflows/build.yml/badge.svg)](https://github.com/cabal312512/RepoTower/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/release/cabal312512/RepoTower)](https://github.com/cabal312512/RepoTower/releases/latest)
@@ -10,80 +10,62 @@ A small, offline desktop tool for exploring source dependencies. Disconnect a fi
 
 [Download](https://github.com/cabal312512/RepoTower/releases/latest) · [简体中文](docs/README.zh-CN.md) · [Language support](docs/LANGUAGES.md) · [Contributing](CONTRIBUTING.md)
 
-![RepoTower showing a dependency graph in light mode](docs/images/release-light.png)
+![RepoTower native light mode](docs/images/release-light.png)
 
 ## Download
 
-Get the assets from the [latest release](https://github.com/cabal312512/RepoTower/releases/latest):
+| Platform | Download | Start |
+| --- | --- | --- |
+| Windows x64 | `RepoTower-0.6.0-windows-x64.exe` | Save in a writable folder and open. This is the application itself. |
+| Windows x64, with documentation | `RepoTower-0.6.0-windows-x64-portable.zip` | Extract; open `RepoTower.exe`. |
+| macOS Apple Silicon | `RepoTower-0.6.0-macos-arm64.zip` | Extract; open `RepoTower.app`. |
+| macOS Intel | `RepoTower-0.6.0-macos-x64.zip` | Extract; open `RepoTower.app`. |
+| Linux x64 | `RepoTower-0.6.0-linux-x64.tar.gz` | Extract; run `./RepoTower`. |
 
-| Platform                | Download                                   | Start                                              |
-| ----------------------- | ------------------------------------------ | -------------------------------------------------- |
-| Windows x64             | `RepoTower-0.5.0-windows-x64-portable.zip` | Extract the complete folder; open `RepoTower.exe`. |
-| Windows x64, single EXE | `RepoTower-0.5.0-windows-x64.exe`          | Put it in a writable folder and open it.           |
-| macOS Apple Silicon     | `RepoTower-0.5.0-macos-arm64.zip`          | Extract; open `RepoTower.app`.                     |
-| macOS Intel             | `RepoTower-0.5.0-macos-x64.zip`            | Extract; open `RepoTower.app`.                     |
-| Linux x64               | `RepoTower-0.5.0-linux-x64.tar.gz`         | Extract; run `./RepoTower`.                        |
+The Windows EXE runs on its own: **no Electron, Chromium, WebView2, Node.js or language SDK installation**, and no application payload extraction. Fonts, examples, analysis grammars and the interface are embedded. The app runs offline and never executes the project being inspected.
 
-No language SDK, Node.js or Rust installation is required to use the app. The single EXE unpacks its application cache and keeps settings in **`RepoTower-data` beside the EXE**; it is a single download, not an app that leaves no files. Folder editions keep settings in adjacent `runtime-data`. Use a writable location.
+Preferences, temporary files and embedded examples are kept in `runtime-data` beside the executable (beside the `.app` on macOS). Use a writable folder. This describes application-managed files; the operating system and graphics driver may maintain their own records and caches.
 
-Releases include SHA-256 checksums and source archives. The binaries are unsigned; macOS builds are not notarized. Linux needs the normal desktop libraries used by Electron. See [distribution notes](docs/DISTRIBUTION.md).
+Releases include `SHA256SUMS.txt` and source archives. Windows binaries are unsigned; macOS apps are ad-hoc signed, **not notarized**. See [platform requirements and distribution notes](docs/DISTRIBUTION.md).
 
-## Explore a project
+## Explore
 
-1. Open a project folder, drop one onto the window, or choose **Try demo**.
-2. Select a file to see its dependencies and consumers. Double-click it for **Nearby**.
-3. Choose **Disconnect file**. The impact view follows actual dependency edges, one wave at a time.
-4. Pause, step, replay, or select any disconnected file to restore it. **Restore all** clears the simulation.
+1. Open or drop a source folder, or try an embedded example.
+2. Select a file. Arrows run **from a dependency to the files that use it**.
+3. Choose **Disconnect** to watch the actual dependency paths propagate. Pause, step, scrub or replay the result.
+4. Select any disconnected file again to restore it. Other cuts remain active. Use Undo or Restore all when needed.
 
-**Source files are only read. Disconnecting a file never edits, deletes or executes it.**
+In **All**, hold the right mouse button to move a file; its lines and arrows follow. Reset the selected position or every position from the grid button. Drag the background to pan, scroll to zoom, and press **R** to fit. Selection preserves the camera. Double-click a file for **Nearby**. **Impact path** and its history selector keep earlier cut results accessible.
 
-- **Java, Python, C, C++, Go, Rust, C#, JavaScript and TypeScript**, with built-in parsers and examples.
-- **All**, **Nearby** and **Impact** views; search, cycle detection and unresolved-reference details.
-- Drag nodes with the right mouse button in All. Connections follow; reset one position or every position.
-- Independent cameras for each view; selecting a file preserves your zoom.
-- Multiple disconnections, individual restoration, undo and persistent impact history.
-- Compact 980 × 680 window. English and light mode by default; Chinese, Japanese and dark mode available.
-- Offline operation, no account, telemetry, repository uploads or auto-updater.
+The **?** button contains the guide. Settings offer light/dark appearances, English/简体中文/日本語 and reduced motion. New profiles start in **English and light mode**. Keyboard shortcuts include Ctrl/Cmd+O, Ctrl/Cmd+Z, R, Space and Delete.
 
-![Tracing the effect of disconnecting a configuration file](docs/images/release-impact.png)
+![Native impact playback](docs/images/release-impact.png)
 
-Arrows point from a **dependency to a file that uses it**. Impact means potential reachability through static dependencies, not a prediction that every consumer will fail at runtime. Type-only imports count. Unresolved imports remain visible instead of producing guessed edges. See [supported constructs and limitations](docs/LANGUAGES.md).
+## Supported source
 
-The built-in demo has 23 files and 24 import edges. Disconnecting `src/core/config.ts` affects 13 other files; 9 remain available. [Demo explanation](fixtures/demo-project/README.md).
+JavaScript / TypeScript, Java, Python, C / C++, Go, Rust and C# use built-in Tree-sitter grammars and language-specific local resolution. No Python, JDK, .NET, Go or Rust toolchain is needed to analyze a project.
 
-| Action               | Control                            |
-| -------------------- | ---------------------------------- |
-| Select / open Nearby | Click / double-click a node        |
-| Pan / zoom           | Drag empty space / mouse wheel     |
-| Move a node in All   | Right mouse drag                   |
-| Reset positions      | Position menu or node context menu |
-| Fit / deselect       | `R` / `Esc`                        |
-| Undo                 | `Ctrl+Z` / `Cmd+Z`                 |
-| Help                 | `?` button                         |
+This is a **static dependency simulation**, not proof of a runtime crash. Unresolved or ambiguous references remain visible as diagnostics. Build-generated sources, reflection, macros and framework behavior have limits; see the [language support table](docs/LANGUAGES.md).
 
-## Build from source
+Large projects are analyzed with bounded resource limits. The overview renders up to 250 files; search can reveal files outside that overview. Analysis notes report skipped or partially scanned content.
 
-Use **Node.js 24+**, **Rust 1.90+**, and a native C toolchain. Build on the operating system and architecture you want to distribute. Initial dependency downloads require internet access; the finished app works offline.
+## Build
+
+Use Rust 1.90, a native C compiler and Node.js 24+ for asset preparation and packaging. Initial builds download dependencies; the released app needs no network connection.
 
 ```sh
 npm ci
 node scripts/build-native.mjs
+node scripts/test-native.mjs --packaged
 node scripts/distribute.mjs
 ```
 
-On Windows, `scripts/build.ps1` can bootstrap a project-local GNU/Rust toolchain. See [portable toolchain setup](docs/PORTABLE-TOOLCHAIN.md). Once it is configured:
+Windows can use `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1`, which bootstraps a project-local Rust/GCC toolchain. Nothing needs to be installed globally. See [portable toolchain setup](docs/PORTABLE-TOOLCHAIN.md).
 
-```powershell
-. ./scripts/rust-env.ps1
-node scripts/build-native.mjs
-node scripts/distribute.mjs
-node scripts/build-single.mjs
-```
-
-Packages and checksums are written to `release/artifacts/`. Build tools, caches, temporary files and runtime data are excluded from Git. Dependencies are pinned in the npm and Cargo lockfiles; the source archives do not bundle those dependencies.
-
-[Architecture](docs/ARCHITECTURE.md) · [Validation](docs/VALIDATION.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md)
+The runtime lives in `crates/repotower-desktop` (egui / wgpu) and links `crates/repotower-core` directly. Node only runs development, tests and packaging. See [architecture](docs/ARCHITECTURE.md), [validation](docs/VALIDATION.md) and [contributing](CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE). Copyright © 2026 Cabal and RepoTower contributors. Bundled dependencies retain their own licenses in `THIRD_PARTY_LICENSES.txt` and the Electron distribution notices.
+[MIT](LICENSE). Third-party components and embedded fonts retain their own licenses, available in Settings → Licenses and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+The previous Electron implementation remains available in [v0.5.0](https://github.com/cabal312512/RepoTower/releases/tag/v0.5.0).

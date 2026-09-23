@@ -1,6 +1,6 @@
 [package]
 name = "repotower-core"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 license = "MIT"
 description = "Offline multi-language dependency analysis and potential-impact simulation for RepoTower"

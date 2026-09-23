@@ -5,7 +5,7 @@ body:
     id: version
     attributes:
       label: Version and platform
-      placeholder: 0.5.0, Windows 11 x64, single EXE
+      placeholder: 0.6.0, Windows 11 x64, single EXE
     validations:
       required: true
   - type: textarea

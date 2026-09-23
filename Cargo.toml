@@ -1,6 +1,6 @@
 [workspace]
-members = ["crates/repotower-core", "crates/repotower-launcher"]
-default-members = ["crates/repotower-core"]
+members = ["crates/repotower-core", "crates/repotower-desktop"]
+default-members = ["crates/repotower-desktop"]
 resolver = "2"
 
 [profile.release]

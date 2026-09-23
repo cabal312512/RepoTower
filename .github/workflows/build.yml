@@ -45,6 +45,9 @@ jobs:
           rustup default 1.90.0
       - name: Install build dependencies
         run: npm ci
+      - name: Install Linux window and graphics libraries on the disposable runner
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libxkbcommon-dev libwayland-dev libvulkan1 mesa-vulkan-drivers xvfb
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
       - name: Test, build and package native application
@@ -52,25 +55,18 @@ jobs:
       - name: Verify packaged GUI on Linux
         if: runner.os == 'Linux'
         run: |
-          xvfb-run -a node scripts/test-release.mjs
-          xvfb-run -a node scripts/test-languages.mjs --packaged
+          xvfb-run -a node scripts/test-native.mjs --packaged
       - name: Verify packaged GUI on Windows and macOS
         if: runner.os != 'Linux'
         run: |
-          node scripts/test-release.mjs
-          node scripts/test-languages.mjs --packaged
-      - name: Verify Windows interactions
-        if: runner.os == 'Windows'
-        run: |
-          node scripts/test-desktop.mjs --packaged
-          node scripts/test-interactions.mjs --packaged
+          node scripts/test-native.mjs --packaged
       - name: Create native archive and checksum
         run: node scripts/distribute.mjs
       - name: Build and verify Windows single EXE
         if: runner.os == 'Windows'
         run: |
           node scripts/build-single.mjs
-          node scripts/test-single.mjs
+          node scripts/test-native-single.mjs
       - uses: actions/upload-artifact@v7
         with:
           name: package-${{ matrix.platform }}
@@ -84,8 +80,8 @@ jobs:
         with:
           name: diagnostics-${{ matrix.platform }}
           path: |
-            test-results/*.json
-            test-results/*.png
+            test-results/**/*.json
+            test-results/**/*.png
           retention-days: 7
           if-no-files-found: ignore
 

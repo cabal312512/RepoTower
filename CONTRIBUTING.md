@@ -1,27 +1,27 @@
 # Contributing
 
-Use Node.js 24+, Rust 1.90+ and a native C compiler. Initial dependency downloads need an internet connection. Windows users can use the project-local setup described in [PORTABLE-TOOLCHAIN.md](docs/PORTABLE-TOOLCHAIN.md).
+Use Rust 1.90, a native C compiler and Node.js 24+. Node runs asset preparation, packaging and GUI tests only; the shipped app is Rust. Initial dependency downloads need a network connection. Windows users can use the [project-local toolchain](docs/PORTABLE-TOOLCHAIN.md).
 
 ```sh
 npm ci
 node scripts/build-native.mjs
 cargo fmt --all -- --check
-cargo test --workspace --locked
-npm test
-node scripts/test-languages.mjs --packaged
+node scripts/test-native.mjs --packaged
 node scripts/distribute.mjs
 ```
 
-The native build runs Rust and frontend tests before packaging. On headless Linux, run desktop checks with `xvfb-run -a`. Windows also supports `node scripts/test-desktop.mjs --packaged`, `node scripts/test-interactions.mjs --packaged`, and, after `node scripts/build-single.mjs`, `node scripts/test-single.mjs`.
+The build runs the Rust workspace tests before packaging. On headless Linux use `xvfb-run -a node scripts/test-native.mjs --packaged`. To create and verify the standalone Windows download, run `node scripts/build-single.mjs` followed by `node scripts/test-native-single.mjs`. For local UI work, `npm run dev` builds and opens a debug native window.
 
-Keep changes focused. For dependency resolution, add a small source fixture and assert the exact edges, including ambiguous or unresolved references. For interaction changes, test the user-visible result. Update all three UI languages and the relevant documentation. Do not execute analyzed projects, upload repository contents or add network requests to the desktop app.
+The GUI test driver injects pointer, keyboard and folder-drop input into the real native executable and captures GPU screenshots. It checks visible interaction results, simulation state and source-file hashes. Normal launches expose neither a test listener nor a network port.
 
-Use a `codex/` or descriptive feature branch and open a pull request against `main`. Include the behavior changed and the checks you ran. Avoid private project paths, secrets and large generated assets in reports or commits. Code submitted to this repository is covered by its MIT license.
+For resolver changes, add small source fixtures and assert exact edges, including ambiguous or unresolved references. For interaction changes, test user-visible behavior. Update English, Chinese and Japanese resources together. Do not execute analyzed projects, upload repository contents or add runtime network requests.
+
+Use a feature branch and open a pull request against `main`. Describe the behavior and relevant validation. Do not commit private paths, secrets, caches, build tools or generated release binaries. Contributions are MIT licensed.
 
 ## Releases
 
-The build workflow validates native Windows x64, macOS arm64/x64 and Linux x64 packages. A successful push to `main` publishes a release **only when the version in `package.json` has no existing release**. Pull requests only build and test. Existing public releases and assets are never overwritten.
+The workflow builds and tests native Windows x64, macOS arm64/x64 and Linux x64 packages. A successful push to `main` publishes a release only when that package version has no existing public release. Pull requests only build and test. Existing public releases are never overwritten.
 
-For a new version, update `package.json`, both lockfiles, the Cargo package versions, `RepoTower.cmd`, the title-bar version and download examples. Add `docs/releases/vVERSION.md`, update the changelog and validation notes, then review the complete change before merging. The release job collects the native archives, Windows single EXE and checksums, creates a draft, uploads assets, and publishes it when all uploads succeed. A failed draft may be retried for the same commit.
+For a new version, update `package.json`, both lockfiles, both Cargo package versions, `RepoTower.cmd`, the title-bar/about version and download examples. Add `docs/releases/vVERSION.md`, update the changelog and validation notes, and review the complete diff. The release job verifies assets, creates a draft, uploads files and publishes only after all uploads succeed.
 
-Native binaries are currently unsigned. Do not describe CI completion as code signing, notarization, or evidence of runtime behavior on untested OS versions.
+Windows binaries currently lack a signing certificate. macOS bundles are ad-hoc signed, not notarized. CI validation must not be described as testing every OS/GPU combination.

@@ -8,8 +8,7 @@ import { spawnSync } from 'node:child_process';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const temp = path.join(root, '.tmp');
 const cargoCache = path.join(root, '.cache', 'cargo');
-const electronCache = path.join(root, '.cache', 'electron');
-for (const directory of [temp, cargoCache, electronCache]) fs.mkdirSync(directory, { recursive: true });
+for (const directory of [temp, cargoCache]) fs.mkdirSync(directory, { recursive: true });
 const env = {
   ...process.env,
   TEMP: temp,
@@ -18,9 +17,6 @@ const env = {
   CARGO_HOME: cargoCache,
   CARGO_TARGET_DIR: path.join(root, 'target'),
   npm_config_cache: path.join(root, '.cache', 'npm'),
-  ELECTRON_CACHE: electronCache,
-  electron_config_cache: electronCache,
-  ELECTRON_BUILDER_CACHE: path.join(root, '.cache', 'electron-builder'),
 };
 let cargo = process.platform === 'win32' ? 'cargo.exe' : 'cargo';
 const portableRust = path.join(root, '.tools', 'rust', 'bin');
@@ -50,19 +46,13 @@ function run(executable, args) {
 }
 function nodeScript(relative, args = []) { run(process.execPath, [path.join(root, relative), ...args]); }
 
-if (!fs.existsSync(path.join(root, 'node_modules', 'vite', 'package.json'))) {
-  throw new Error('JavaScript dependencies are missing. Run npm ci first (its cache is configured inside the project).');
-}
+nodeScript('scripts/prepare-native-assets.mjs');
 if (!process.argv.includes('--skip-tests')) {
   run(cargo, ['test', '--workspace', '--locked']);
-  nodeScript('node_modules/vitest/vitest.mjs', ['run']);
 }
-run(cargo, ['build', '--workspace', '--release', '--locked']);
-nodeScript('node_modules/typescript/bin/tsc', ['--noEmit']);
-nodeScript('node_modules/vite/bin/vite.js', ['build']);
+const debug = process.argv.includes('--debug');
+run(cargo, ['build', '-p', 'repotower-desktop', ...debug ? [] : ['--release'], '--locked']);
 if (!process.argv.includes('--skip-package')) {
-  // Electron 44's npm package intentionally does not download its runtime in a
-  // postinstall script. This is required on every platform before packaging/tests.
-  nodeScript('node_modules/electron/install.js');
-  nodeScript('scripts/package.mjs');
+  nodeScript('scripts/package-native.mjs');
 }
+if (process.argv.includes('--run')) run(path.join(root, 'target', debug ? 'debug' : 'release', process.platform === 'win32' ? 'RepoTower.exe' : 'RepoTower'), []);

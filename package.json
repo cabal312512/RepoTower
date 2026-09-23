@@ -1,43 +1,20 @@
 {
   "name": "repotower",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "An offline multi-language dependency circuit and impact tracer",
   "license": "MIT",
   "author": "Cabal (cabal312512)",
-  "main": "desktop/main.cjs",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "tsc --noEmit && vite build",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "start": "electron .",
-    "package": "node scripts/package.mjs",
-    "test:desktop": "node scripts/test-desktop.mjs",
-    "test:languages": "node scripts/test-languages.mjs",
-    "test:interactions": "node scripts/test-interactions.mjs"
-  },
-  "dependencies": {
-    "lucide-react": "1.47.0",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "zustand": "5.0.15"
+    "dev": "node scripts/build-native.mjs --debug --run --skip-tests --skip-package",
+    "build": "node scripts/build-native.mjs",
+    "test": "cargo test --workspace --locked",
+    "test:desktop": "node scripts/test-native.mjs",
+    "package": "node scripts/package-native.mjs",
+    "distribute": "node scripts/distribute.mjs"
   },
   "devDependencies": {
-    "@electron/packager": "20.3.0",
-    "@testing-library/jest-dom": "7.0.1",
-    "@testing-library/react": "16.3.3",
-    "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0",
-    "@vitejs/plugin-react": "4.7.0",
-    "electron": "44.4.3",
-    "jsdom": "29.1.1",
-    "playwright-core": "1.63.0",
-    "prettier": "3.9.8",
     "resedit": "2.0.3",
-    "typescript": "7.0.2",
-    "vite": "7.3.6",
-    "vitest": "3.2.7",
     "yazl": "3.3.1"
   },
   "repository": {

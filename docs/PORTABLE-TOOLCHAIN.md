@@ -1,64 +1,46 @@
 # Project-local Windows toolchain
 
-The Windows build uses a portable Rust GNU toolchain. It does not install Rustup,
-Visual Studio, system packages, services, registry entries or a persistent PATH.
-Development downloads require a network connection; the finished application does
-not. Deleting this project directory also removes these development dependencies.
+Windows can build with the portable Rust GNU toolchain in this repository's ignored directories. Setup does not install Rustup, Visual Studio, services, registry entries or a permanent PATH. Initial downloads need a network connection; the finished application does not.
 
-## Versions and sources
+## Tools
 
-* Rust compiler, Cargo, rustfmt, standard library and bundled MinGW linker support: **1.90.0**,
-  `x86_64-pc-windows-gnu`, from `https://static.rust-lang.org/dist/`.
-* C compiler for Tree-sitter parsers: **w64devkit 2.10.0 / GCC 16.2.0**, from the
-  [upstream release](https://github.com/skeeto/w64devkit/releases/tag/v2.10.0).
-* Rust archives are checked against the official SHA-256 sidecars. The w64devkit
-  archive is checked against the SHA-256 digest published in its GitHub release.
-* Rust components are extracted directly, without running an installer. The
-  w64devkit release is a 7-Zip self-extractor; its explicit destination is `.tools`.
+- Rust compiler, Cargo, rustfmt, standard library and MinGW linker support: 1.90.0, `x86_64-pc-windows-gnu`, from the official Rust distribution. SHA-256 sidecars are verified.
+- Tree-sitter's C compiler: w64devkit 2.10.0 from its [upstream release](https://github.com/skeeto/w64devkit/releases/tag/v2.10.0), verified against its published digest.
+- Node.js 24+ is a build/test helper. Use an existing installation, or extract the official portable archive into `.tools/node`.
+- The CJK font download is pinned by release and SHA-256 in `assets/fonts/manifest.json`.
 
-## Commands
-
-From the repository root in PowerShell:
+## Build
 
 ```powershell
-# First build only: download and extract the pinned portable dependencies.
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-rust.ps1
-
-# Apply process-local settings. Closing this shell discards them.
-. .\scripts\rust-env.ps1
-cargo test --manifest-path crates/repotower-core/Cargo.toml
-cargo build --release --manifest-path crates/repotower-core/Cargo.toml
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1
 ```
 
-The release binary is `target/release/repotower-core.exe`. Do not run Cargo from a
-fresh terminal before dot-sourcing the environment if you want all caches to stay
-inside the project. `rust-env.ps1` sets `CARGO_HOME`, `RUSTUP_HOME`, `TEMP`, `TMP`,
-the compiler/linker variables, target directory and current-process PATH. It never
-changes user or machine environment settings.
+For direct Cargo commands, first apply the process-local environment:
 
-Rust links its matching bundled MinGW support libraries through
-`-C link-self-contained=yes`. w64devkit builds the C parser objects. This avoids a
-libgcc naming mismatch between Rust's standard library and recent GCC releases.
+```powershell
+. ./scripts/rust-env.ps1
+node scripts/prepare-native-assets.mjs
+cargo test --workspace --locked
+cargo build -p repotower-desktop --release --locked
+```
+
+The native application is `target/release/RepoTower.exe`. Package it with `node scripts/package-native.mjs`; create downloads with `node scripts/distribute.mjs` and `node scripts/build-single.mjs`.
+
+`rust-env.ps1` sets CARGO_HOME, RUSTUP_HOME, TEMP/TMP, the target directory, compiler/linker paths and the current process PATH. Closing that shell discards the settings. Run Cargo through this environment to keep caches local.
 
 ## Local directories
 
 | Directory | Contents |
 | --- | --- |
-| `.tools/rust` | Portable Rust executables and standard library |
-| `.tools/w64devkit` | Portable C compiler and its support files |
-| `.cache/downloads` | Pinned toolchain archives and checksums |
-| `.cache/cargo` | Rust crate index, archives and source cache |
-| `.cache/npm` | JavaScript package cache |
-| `.tmp` | Build and extraction temporary files |
-| `target` | Rust build output |
-| `runtime-data` | Local desktop settings, Chromium cache and temporary files |
+| `.tools/rust`, `.tools/w64devkit` | Portable build tools |
+| `.cache/downloads` | Toolchain downloads and checksums |
+| `.cache/cargo`, `.cache/npm` | Dependency caches |
+| `.cache/native-assets` | Verified embedded fonts and compressed copies |
+| `.tmp` | Build temporary files |
+| `target` | Rust build outputs |
+| `release` | Packaged applications and archives |
+| `test-results` | Native interaction reports, screenshots and isolated test profiles |
 
-These directories are excluded from Git. The portable release needs neither Rust
-nor Node installed on the recipient's machine. The desktop host sets its writable
-Electron directories before browser initialization. It also denies renderer
-network requests and permission prompts, and runs the analysis executable through
-stdin/stdout without opening a local HTTP port.
+These directories are excluded from Git. Application-managed runtime data is adjacent to whichever native executable is launched. No Node, Rust, browser engine or language SDK is required on a recipient's machine. Windows GNU builds statically link their matching Rust/MinGW support libraries; CI's Windows MSVC build requests a static C runtime.
 
-Other platforms can compile the same Rust source with a native Rust toolchain and
-package the Electron host natively. Windows GNU binaries cannot be reused as
-macOS or Linux sidecars; each release must include the matching native executable.
+macOS and Linux compile the same Rust source on their respective native build runners. Cross-platform release validation is recorded in GitHub Actions.

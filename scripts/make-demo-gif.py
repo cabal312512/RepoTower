@@ -6,7 +6,7 @@ root = Path(__file__).resolve().parent.parent
 sources = [root / 'docs' / 'images' / name for name in
            ['circuit-dark.png', 'circuit-light.png', 'circuit-impact.png']]
 if not all(source.exists() for source in sources):
-    raise SystemExit('First run node scripts/capture-demo.mjs')
+    raise SystemExit('First run node scripts/capture-native.mjs')
 images = []
 for source in sources:
     with Image.open(source) as original:
