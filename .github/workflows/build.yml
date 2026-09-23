@@ -1,0 +1,116 @@
+name: Build and release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  native:
+    name: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows-x64
+          - os: macos-15
+            platform: macos-arm64
+          - os: macos-15-intel
+            platform: macos-x64
+          - os: ubuntu-22.04
+            platform: linux-x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install pinned Rust on the disposable build runner
+        run: |
+          rustup toolchain install 1.90.0 --profile minimal --component rustfmt
+          rustup default 1.90.0
+      - name: Install build dependencies
+        run: npm ci
+      - name: Check Rust formatting
+        run: cargo fmt --all -- --check
+      - name: Test, build and package native application
+        run: node scripts/build-native.mjs
+      - name: Verify packaged GUI on Linux
+        if: runner.os == 'Linux'
+        run: |
+          xvfb-run -a node scripts/test-release.mjs
+          xvfb-run -a node scripts/test-languages.mjs --packaged
+      - name: Verify packaged GUI on Windows and macOS
+        if: runner.os != 'Linux'
+        run: |
+          node scripts/test-release.mjs
+          node scripts/test-languages.mjs --packaged
+      - name: Verify Windows interactions
+        if: runner.os == 'Windows'
+        run: |
+          node scripts/test-desktop.mjs --packaged
+          node scripts/test-interactions.mjs --packaged
+      - name: Create native archive and checksum
+        run: node scripts/distribute.mjs
+      - name: Build and verify Windows single EXE
+        if: runner.os == 'Windows'
+        run: |
+          node scripts/build-single.mjs
+          node scripts/test-single.mjs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package-${{ matrix.platform }}
+          path: release/artifacts/*
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error
+      - name: Retain diagnostic evidence
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: diagnostics-${{ matrix.platform }}
+          path: |
+            test-results/*.json
+            test-results/*.png
+          retention-days: 7
+          if-no-files-found: ignore
+
+  publish:
+    name: Publish new version
+    needs: native
+    if: github.repository == 'cabal312512/RepoTower' && github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: package-*
+          merge-multiple: true
+          path: release/artifacts
+      - name: Publish checked assets without replacing existing releases
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/publish-release.mjs

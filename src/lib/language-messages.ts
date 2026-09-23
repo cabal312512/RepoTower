@@ -1,0 +1,220 @@
+type Language = 'zh' | 'en' | 'ja';
+
+// Exact diagnostic keys only: source identifiers, import paths and compiler/OS
+// details never pass through substring replacement.
+const chinese: Record<string, { en: string; ja: string }> = {
+  '没有找到支持的源码文件。支持 Java、Python、C/C++、Go、Rust、C# 和 JS/TS。': {
+    en: 'No supported source files found. Supported languages: Java, Python, C/C++, Go, Rust, C# and JS/TS.',
+    ja: '対応するソースファイルが見つかりません。Java、Python、C/C++、Go、Rust、C#、JS/TS に対応しています。',
+  },
+  '项目配置超过读取限制（单文件 1 MiB、合计 16 MiB），部分模块路径可能无法解析。': {
+    en: 'Project configuration exceeded the read limits (1 MiB per file, 16 MiB total). Some module paths may not resolve.',
+    ja: 'プロジェクト設定が読み取り上限（1 ファイル 1 MiB、合計 16 MiB）を超えました。一部のモジュールパスを解決できない可能性があります。',
+  },
+  'C/C++ 分析静态包含和项目根 compile_commands.json 中的显式搜索路径；不运行编译器或预处理器，不继承头文件编译配置，条件分支均保留。无法确定的包含会标为未解析。':
+    {
+      en: 'C/C++ analysis covers static includes and explicit search paths in the project-root compile_commands.json. Compilers and preprocessors are not run; headers do not inherit compilation settings, and all conditional branches are retained. Uncertain includes remain unresolved.',
+      ja: 'C/C++ は静的なインクルードと、プロジェクトルートの compile_commands.json に明示された検索パスを解析します。コンパイラーやプリプロセッサーは実行せず、ヘッダーはコンパイル設定を継承しません。すべての条件分岐を保持し、不明な参照は未解決と表示します。',
+    },
+  'Go 包导入展开为本地包的生产源码文件；不执行 go 命令，也不应用构建标签、平台筛选或 replace 指令。':
+    {
+      en: 'Go package imports expand to the local package’s production source files. The go command is not run; build tags, platform filters and replace directives are not applied.',
+      ja: 'Go のパッケージインポートは、ローカルパッケージのテスト以外のソースファイルに展開します。go コマンドは実行せず、ビルドタグ、プラットフォームの選別、replace 指定は適用しません。',
+    },
+  'Rust 分析静态模块声明和引用；不展开宏、不执行构建脚本、不应用 cfg 条件或非标准 Cargo 目标配置。':
+    {
+      en: 'Rust analysis covers static module declarations and references. Macros, build scripts, cfg conditions and nonstandard Cargo target configuration are not evaluated.',
+      ja: 'Rust は静的なモジュール宣言と参照を解析します。マクロ展開、ビルドスクリプト、cfg 条件、標準外の Cargo ターゲット設定は評価しません。',
+    },
+  'Java/C# 根据源码声明和类型引用匹配本地文件；不运行构建工具，不解析外部包、反射或生成代码，重复或不明确的类型不会猜测连线。':
+    {
+      en: 'Java/C# match local files using source declarations and type references. Build tools are not run; external packages, reflection and generated code are not resolved. Duplicate or ambiguous types do not produce guessed edges.',
+      ja: 'Java/C# はソースの宣言と型参照からローカルファイルを照合します。ビルドツールは実行せず、外部パッケージ、リフレクション、生成コードは解決しません。重複や曖昧な型には推測による辺を作成しません。',
+    },
+  'C/C++ 包含目标由宏计算，未执行预处理。': {
+    en: 'The C/C++ include target is computed by a macro. Preprocessing was not executed.',
+    ja: 'C/C++ のインクルード先はマクロで計算されます。前処理は実行していません。',
+  },
+  '在已扫描的 C/C++ 文件中未找到包含目标。': {
+    en: 'The include target was not found among scanned C/C++ files.',
+    ja: 'スキャン済みの C/C++ ファイルにインクルード先が見つかりません。',
+  },
+  '包含路径对应多个项目文件，缺少编译器搜索路径，未猜测目标。': {
+    en: 'The include path matches multiple project files. The target was not guessed without compiler search paths.',
+    ja: 'インクルードパスに複数のプロジェクトファイルが一致します。コンパイラーの検索パスがないため、参照先は推測していません。',
+  },
+  '包含目标需要明确且一致的编译器搜索路径；未按同名文件猜测连线。': {
+    en: 'The include target requires explicit, consistent compiler search paths. No edge was guessed from matching filenames.',
+    ja: 'インクルード先の特定には明確で一貫したコンパイラーの検索パスが必要です。同名ファイルから辺を推測していません。',
+  },
+  '包含路径使用不支持的格式。': {
+    en: 'The include path uses an unsupported format.',
+    ja: 'インクルードパスの形式に対応していません。',
+  },
+  '#include_next 需要编译器搜索路径，尚未解析。': {
+    en: '#include_next requires compiler search paths and is not resolved.',
+    ja: '#include_next はコンパイラーの検索パスが必要なため、解決していません。',
+  },
+  'Python 项目内模块未找到；目标可能不存在、被忽略或使用自定义导入路径。': {
+    en: 'The Python project module was not found. It may be missing, ignored, or use a custom import path.',
+    ja: 'Python のプロジェクト内モジュールが見つかりません。存在しない、除外されている、または独自のインポートパスを使っている可能性があります。',
+  },
+  'Python 导入在项目根目录与 src 目录中存在多个候选；未猜测 sys.path 顺序。': {
+    en: 'The Python import has multiple candidates in the project root and src directory. The sys.path order was not guessed.',
+    ja: 'Python のインポートに、プロジェクトルートと src ディレクトリ内の複数の候補があります。sys.path の順序は推測していません。',
+  },
+  'Python 相对导入超出可确定的包范围。': {
+    en: 'The Python relative import is outside the determinable package boundary.',
+    ja: 'Python の相対インポートが、特定できるパッケージの範囲を超えています。',
+  },
+  'Python 包导出可能由 __getattr__ 动态生成；未猜测同名子模块。': {
+    en: 'The Python package export may be generated dynamically by __getattr__. A same-named submodule was not assumed.',
+    ja: 'Python のパッケージ公開名は __getattr__ で動的に生成される可能性があります。同名のサブモジュールとは推測していません。',
+  },
+  'Python 包成员未在静态导出或已扫描子模块中找到；未猜测文件依赖。': {
+    en: 'The Python package member was not found in static exports or scanned submodules. No file dependency was guessed.',
+    ja: 'Python のパッケージメンバーが、静的な公開名やスキャン済みサブモジュールに見つかりません。ファイル依存は推測していません。',
+  },
+  'Python __all__ 不是静态字符串列表；通配导入的子模块可能不完整。': {
+    en: 'Python __all__ is not a static string list. Submodules from wildcard imports may be incomplete.',
+    ja: 'Python の __all__ が静的な文字列リストではありません。ワイルドカードインポートのサブモジュールが不完全な可能性があります。',
+  },
+  'Python 解析未完成。': {
+    en: 'Python parsing did not complete.',
+    ja: 'Python の構文解析が完了しませんでした。',
+  },
+  'Java 语法树解析失败。': {
+    en: 'The Java syntax tree could not be parsed.',
+    ja: 'Java の構文木を解析できませんでした。',
+  },
+  'Java 文件未建立索引。': {
+    en: 'The Java source was not indexed.',
+    ja: 'Java ソースの索引が作成されていません。',
+  },
+};
+
+const english: Record<string, { zh: string; ja: string }> = {
+  'Java type has multiple possible source files; build configuration and classpath selection were not guessed.':
+    {
+      zh: 'Java 类型对应多个源码文件；未猜测构建配置或 classpath 的选择顺序。',
+      ja: 'Java の型に複数のソースファイル候補があります。ビルド設定や classpath の選択順序は推測していません。',
+    },
+  'Java project type was not found; it may be ignored, generated, or outside the scanned source set.':
+    {
+      zh: 'Java 项目类型未找到；它可能被忽略、由构建生成或位于扫描范围之外。',
+      ja: 'Java のプロジェクト型が見つかりません。除外対象、生成コード、またはスキャン範囲外の可能性があります。',
+    },
+  'C# type has multiple possible source declarations; project and assembly selection was not guessed.':
+    {
+      zh: 'C# 类型对应多个源码声明；未猜测项目或程序集的选择规则。',
+      ja: 'C# の型に複数のソース宣言候補があります。プロジェクトやアセンブリの選択規則は推測していません。',
+    },
+  'C# project type was not found; it may be ignored, generated, or outside the scanned source set.':
+    {
+      zh: 'C# 项目类型未找到；它可能被忽略、由构建生成或位于扫描范围之外。',
+      ja: 'C# のプロジェクト型が見つかりません。除外対象、生成コード、またはスキャン範囲外の可能性があります。',
+    },
+  'C# syntax tree could not be parsed.': {
+    zh: 'C# 语法树解析失败。',
+    ja: 'C# の構文木を解析できませんでした。',
+  },
+  'C# source was not indexed.': {
+    zh: 'C# 源码未建立索引。',
+    ja: 'C# ソースの索引が作成されていません。',
+  },
+  'Go import string could not be decoded.': {
+    zh: 'Go 导入路径字符串无法解码。',
+    ja: 'Go のインポートパス文字列をデコードできません。',
+  },
+  'Go package symbol has multiple possible declaration files.': {
+    zh: 'Go 包符号对应多个可能的声明文件。',
+    ja: 'Go のパッケージ内シンボルに複数の宣言ファイル候補があります。',
+  },
+  'Go relative or absolute imports are not resolved in module mode.': {
+    zh: 'Go 模块模式下不解析相对或绝对路径导入。',
+    ja: 'Go のモジュールモードでは相対パスと絶対パスのインポートを解決しません。',
+  },
+  'Go module path matches multiple local modules.': {
+    zh: 'Go 模块路径匹配到多个本地模块。',
+    ja: 'Go のモジュールパスに複数のローカルモジュールが一致します。',
+  },
+  'Go import path contains an invalid path component.': {
+    zh: 'Go 导入路径包含无效的路径段。',
+    ja: 'Go のインポートパスに無効なパス要素があります。',
+  },
+  'Go import crosses a nested module boundary.': {
+    zh: 'Go 导入跨越了嵌套模块的边界。',
+    ja: 'Go のインポートがネストしたモジュールの境界を越えています。',
+  },
+  'Go local package has no scanned production source files.': {
+    zh: 'Go 本地包中没有已扫描的非测试源码文件。',
+    ja: 'Go のローカルパッケージにスキャン済みのテスト以外のソースファイルがありません。',
+  },
+  'Go directory contains multiple production package names.': {
+    zh: 'Go 目录中的非测试源码使用了不同的包名。',
+    ja: 'Go ディレクトリ内のテスト以外のソースで複数のパッケージ名が使われています。',
+  },
+  'Go parser returned no syntax tree': {
+    zh: 'Go 解析器未返回语法树。',
+    ja: 'Go の解析器から構文木が返されませんでした。',
+  },
+  'Go file was not indexed': {
+    zh: 'Go 源码未建立索引。',
+    ja: 'Go ソースの索引が作成されていません。',
+  },
+  'Rust module path is outside the selected project or is not a literal.': {
+    zh: 'Rust 模块路径位于所选项目之外，或不是字面量路径。',
+    ja: 'Rust のモジュールパスが選択したプロジェクトの外にあるか、リテラルではありません。',
+  },
+  'Rust module file was not found among scanned sources.': {
+    zh: '在已扫描源码中未找到 Rust 模块文件。',
+    ja: 'スキャン済みのソースに Rust のモジュールファイルが見つかりません。',
+  },
+  'Rust module has both name.rs and name/mod.rs candidates.': {
+    zh: 'Rust 模块同时存在 name.rs 和 name/mod.rs 候选文件。',
+    ja: 'Rust のモジュールに name.rs と name/mod.rs の両方の候補があります。',
+  },
+  'Rust use path could not be resolved.': {
+    zh: 'Rust 引用路径无法解析。',
+    ja: 'Rust の参照パスを解決できません。',
+  },
+  'Rust super path escapes the crate root.': {
+    zh: 'Rust super 路径超出了 crate 根模块。',
+    ja: 'Rust の super パスが crate のルートモジュールを超えています。',
+  },
+  'Rust crate name matches multiple local libraries.': {
+    zh: 'Rust crate 名称匹配到多个本地库。',
+    ja: 'Rust の crate 名に複数のローカルライブラリが一致します。',
+  },
+  'Rust module path has multiple possible source files.': {
+    zh: 'Rust 模块路径对应多个可能的源码文件。',
+    ja: 'Rust のモジュールパスに複数のソースファイル候補があります。',
+  },
+  'Rust use path was not found in the declared local module tree.': {
+    zh: '在已声明的本地模块树中未找到 Rust 引用路径。',
+    ja: '宣言済みのローカルモジュールツリーに Rust の参照パスが見つかりません。',
+  },
+  'Rust parser returned no syntax tree': {
+    zh: 'Rust 解析器未返回语法树。',
+    ja: 'Rust の解析器から構文木が返されませんでした。',
+  },
+  'Rust file was not indexed': {
+    zh: 'Rust 源码未建立索引。',
+    ja: 'Rust ソースの索引が作成されていません。',
+  },
+};
+
+export function translateLanguageMessage(message: string, language: Language): string | undefined {
+  if (Object.hasOwn(chinese, message))
+    return language === 'zh' ? message : chinese[message][language];
+  if (Object.hasOwn(english, message))
+    return language === 'en' ? message : english[message][language];
+  const unavailable = /^(Java|Python|C\/C\+\+|Go|Rust|C#) parser unavailable$/.exec(message);
+  if (unavailable)
+    return language === 'zh'
+      ? `${unavailable[1]} 解析器不可用。`
+      : language === 'ja'
+        ? `${unavailable[1]} の解析器を利用できません。`
+        : `${unavailable[1]} parser unavailable`;
+  return undefined;
+}

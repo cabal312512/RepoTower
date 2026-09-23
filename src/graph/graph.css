@@ -1,0 +1,569 @@
+.graph-scene {
+  --graph-bg: #171c21;
+  --graph-dot: #627b88;
+  --graph-text: #d9e4e7;
+  --graph-muted: #76858b;
+  --graph-border: #303b41;
+  --graph-node: #1d262b;
+  --graph-wire: #54676c;
+  --graph-accent: #84dfc2;
+  --graph-affected: #ffa779;
+  --graph-cut: #f27e94;
+  --graph-bar: #1d2429;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--graph-bg);
+  color: var(--graph-text);
+  font-family: 'Segoe UI', 'Microsoft YaHei UI', sans-serif;
+  -webkit-app-region: no-drag;
+}
+.graph-scene[data-theme='light'] {
+  --graph-bg: #f1f3ef;
+  --graph-dot: #8d9a91;
+  --graph-text: #24332c;
+  --graph-muted: #718178;
+  --graph-border: #d0d8d0;
+  --graph-node: #fafbf8;
+  --graph-wire: #8a9c93;
+  --graph-accent: #1b8971;
+  --graph-affected: #ce652c;
+  --graph-cut: #cf4c70;
+  --graph-bar: #fbfcf9;
+}
+.graph-board {
+  display: block;
+  outline: none;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+.graph-board:active {
+  cursor: grabbing;
+}
+.graph-grid-dot {
+  fill: var(--graph-dot);
+  opacity: 0.22;
+}
+.graph-heading {
+  position: absolute;
+  top: 14px;
+  left: 20px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 2;
+  pointer-events: none;
+}
+.graph-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: auto;
+}
+.graph-tools button {
+  width: 28px;
+  height: 28px;
+}
+.graph-help,
+.graph-position-menu {
+  position: absolute;
+  z-index: 6;
+  background: var(--graph-bar);
+  border: 1px solid var(--graph-border);
+  border-radius: 8px;
+  box-shadow: 0 12px 36px #0003;
+  font-size: 11px;
+}
+.graph-help {
+  left: 20px;
+  top: 49px;
+  width: min(350px, calc(100% - 40px));
+  max-height: calc(100% - 68px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--graph-border) transparent;
+  padding: 14px;
+  line-height: 1.65;
+}
+.graph-help > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.graph-help ul {
+  padding-left: 16px;
+  margin: 12px 0 0;
+  color: var(--graph-muted);
+}
+.graph-help li + li {
+  margin-top: 8px;
+}
+.graph-position-menu {
+  padding: 5px;
+  min-width: 205px;
+  max-width: calc(100% - 24px);
+}
+.graph-position-menu button {
+  display: flex;
+  justify-content: flex-start;
+  padding: 9px 10px;
+  width: 100%;
+  font-size: 11px;
+}
+.graph-report-select {
+  width: 146px;
+  padding: 5px 7px;
+  border: 1px solid var(--graph-border);
+  border-radius: 5px;
+  background: var(--graph-bar);
+  color: var(--graph-muted);
+  font-size: 10px;
+  pointer-events: auto;
+}
+.graph-scene.is-moving-node .graph-board,
+.graph-scene.is-moving-node .graph-node {
+  cursor: grabbing;
+}
+.graph-scope {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.graph-view-switch {
+  display: flex;
+  padding: 2px;
+  gap: 2px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--graph-node) 80%, transparent);
+  border: 1px solid var(--graph-border);
+  pointer-events: auto;
+}
+.graph-scene button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 0;
+  background: none;
+  color: var(--graph-muted);
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 4px;
+  transition:
+    color 0.15s,
+    background 0.15s;
+  box-shadow: none;
+}
+.graph-scene button:hover:not(:disabled) {
+  color: var(--graph-text);
+  background: color-mix(in srgb, var(--graph-text) 7%, transparent);
+}
+.graph-scene button:focus-visible {
+  outline: 2px solid var(--graph-accent);
+  outline-offset: 2px;
+}
+.graph-scene button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.graph-view-switch button {
+  padding: 3px 10px;
+  font-size: 10px;
+  line-height: 16px;
+}
+.graph-view-switch button.is-active {
+  background: color-mix(in srgb, var(--graph-text) 9%, transparent);
+  color: var(--graph-text);
+}
+.graph-impact-label,
+.graph-limit {
+  font-size: 10px;
+  color: var(--graph-muted);
+}
+.graph-limit {
+  color: var(--graph-affected);
+}
+.graph-column text {
+  fill: var(--graph-muted);
+  letter-spacing: 0.03em;
+  opacity: 0.9;
+}
+.graph-column path {
+  stroke: var(--graph-border);
+  stroke-width: 0.7;
+  stroke-dasharray: 2 7;
+  opacity: 0.35;
+  vector-effect: non-scaling-stroke;
+}
+.graph-wire {
+  fill: none;
+  stroke: var(--graph-wire);
+  stroke-width: 1.2;
+  stroke-opacity: 0.65;
+  vector-effect: non-scaling-stroke;
+  transition:
+    stroke 0.2s,
+    stroke-opacity 0.2s;
+}
+.graph-arrow {
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.graph-arrow-normal,
+.graph-arrow-quiet {
+  stroke: var(--graph-wire);
+}
+.graph-arrow-causal {
+  stroke: var(--graph-affected);
+}
+.graph-arrow-selected {
+  stroke: var(--graph-accent);
+}
+.graph-edge.is-selected .graph-wire {
+  stroke: var(--graph-accent);
+  stroke-width: 1.8;
+  stroke-opacity: 0.95;
+}
+.graph-edge.is-context .graph-wire {
+  stroke-dasharray: 3 5;
+  stroke-opacity: 0.22;
+  stroke-width: 1;
+}
+.graph-edge.is-waiting .graph-wire {
+  stroke-opacity: 0.35;
+}
+.graph-edge.is-reached .graph-wire {
+  stroke: var(--graph-affected);
+  stroke-opacity: 0.88;
+  stroke-width: 1.7;
+}
+.graph-edge.is-dim {
+  opacity: 0.18;
+}
+.graph-pulse {
+  fill: var(--graph-affected);
+  pointer-events: none;
+}
+.graph-node {
+  cursor: pointer;
+  outline: none;
+  transition: opacity 0.15s;
+}
+.graph-node-body {
+  fill: var(--graph-node);
+  stroke: color-mix(in srgb, var(--node-color) 45%, var(--graph-border));
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  transition:
+    fill 0.18s,
+    stroke 0.18s;
+}
+.graph-node-halo {
+  fill: none;
+  stroke: var(--node-color);
+  stroke-width: 3;
+  opacity: 0;
+  vector-effect: non-scaling-stroke;
+}
+.graph-node-dot {
+  fill: var(--node-color);
+}
+.graph-node-label {
+  fill: var(--graph-text);
+  font-family: 'Cascadia Code', 'Consolas', 'SFMono-Regular', monospace;
+  font-weight: 500;
+  pointer-events: none;
+}
+.graph-port {
+  fill: var(--node-color);
+  opacity: 0.75;
+}
+.graph-node.is-selected .graph-node-body,
+.graph-node:focus-visible .graph-node-body {
+  stroke: var(--graph-accent);
+  stroke-width: 1.7;
+  fill: color-mix(in srgb, var(--graph-accent) 8%, var(--graph-node));
+}
+.graph-node.is-selected .graph-node-halo,
+.graph-node:focus-visible .graph-node-halo {
+  stroke: var(--graph-accent);
+  opacity: 0.1;
+}
+.graph-node.is-dim {
+  opacity: 0.35;
+}
+.graph-node.is-pending .graph-node-body {
+  stroke: var(--graph-wire);
+  stroke-opacity: 0.65;
+}
+.graph-node.is-pending .graph-node-dot,
+.graph-node.is-pending .graph-port {
+  fill: var(--graph-muted);
+}
+.graph-node.is-pending .graph-node-label {
+  fill: var(--graph-muted);
+}
+.graph-node.is-affected .graph-node-body {
+  fill: color-mix(in srgb, var(--graph-affected) 8%, var(--graph-node));
+  stroke: var(--graph-affected);
+  stroke-width: 1.4;
+}
+.graph-node.is-affected .graph-node-dot,
+.graph-node.is-affected .graph-port {
+  fill: var(--graph-affected);
+}
+.graph-node.is-affected .graph-node-label {
+  fill: var(--graph-affected);
+}
+.graph-node.is-affected.is-selected .graph-node-halo {
+  stroke: var(--graph-affected);
+  opacity: 0.15;
+}
+.graph-node.is-affected[data-wave=''] .graph-node-body {
+  fill: var(--graph-node);
+  stroke: color-mix(in srgb, var(--graph-affected) 45%, var(--graph-border));
+}
+.graph-node.is-affected[data-wave=''] .graph-node-label {
+  fill: var(--graph-muted);
+}
+.graph-node.is-affected[data-wave=''] .graph-node-dot,
+.graph-node.is-affected[data-wave=''] .graph-port {
+  opacity: 0.45;
+}
+.graph-node.is-removed .graph-node-body {
+  fill: var(--graph-bg);
+  stroke: var(--graph-muted);
+  stroke-dasharray: 4 4;
+  opacity: 0.55;
+}
+.graph-node.is-removed .graph-node-label {
+  fill: var(--graph-muted);
+}
+.graph-node.is-removed .graph-port {
+  opacity: 0;
+}
+.graph-node.is-removed[data-wave='0'] .graph-node-body {
+  stroke: var(--graph-cut);
+  opacity: 0.9;
+}
+.graph-node.is-removed[data-wave='0'] .graph-node-label {
+  fill: var(--graph-cut);
+}
+.graph-cut,
+.graph-cut-line {
+  fill: none;
+  stroke: var(--graph-cut);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+.graph-cut-line {
+  opacity: 0.35;
+  stroke-dasharray: 2 5;
+}
+.graph-zoom {
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--graph-border);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 1px;
+  background: var(--graph-bar);
+  z-index: 3;
+}
+.graph-zoom button {
+  width: 26px;
+  height: 26px;
+}
+.graph-file-tip {
+  pointer-events: none;
+  position: absolute;
+  left: 20px;
+  bottom: 50px;
+  max-width: min(70%, 650px);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: color-mix(in srgb, var(--graph-bg) 94%, transparent);
+  border: 1px solid var(--graph-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 10px;
+  line-height: 16px;
+  z-index: 3;
+}
+.graph-file-tip.has-report {
+  bottom: 88px;
+}
+.graph-tip-path {
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.graph-tip-via {
+  color: var(--graph-muted);
+}
+.graph-tip-via b {
+  color: var(--graph-affected);
+  font-weight: 500;
+}
+.graph-tip-via.is-removed {
+  color: var(--graph-cut);
+}
+.graph-tip-state {
+  color: var(--graph-muted);
+}
+.graph-tip-state.is-standing {
+  color: var(--graph-accent);
+}
+.graph-tip-state.is-affected {
+  color: var(--graph-affected);
+}
+.graph-tip-state.is-removed {
+  color: var(--graph-cut);
+}
+.graph-impact-summary {
+  position: absolute;
+  left: 20px;
+  bottom: 58px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: var(--graph-muted);
+  font-size: 10px;
+  pointer-events: none;
+}
+.graph-impact-summary > span {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.graph-impact-summary i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--graph-muted);
+}
+.graph-impact-summary i.is-affected {
+  background: var(--graph-affected);
+}
+.graph-impact-summary i.is-untouched {
+  background: var(--graph-accent);
+}
+.graph-impact-summary b {
+  font-weight: 600;
+  color: var(--graph-text);
+  font-variant-numeric: tabular-nums;
+}
+.graph-impact-summary em {
+  font-style: normal;
+  margin-left: -3px;
+}
+.graph-playback {
+  position: absolute;
+  left: 20px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: min(440px, calc(100% - 146px));
+  padding: 5px 7px;
+  background: var(--graph-bar);
+  border: 1px solid var(--graph-border);
+  border-radius: 7px;
+  z-index: 3;
+}
+.graph-playback button {
+  width: 25px;
+  height: 25px;
+}
+.graph-playback .graph-play-button {
+  color: var(--graph-affected);
+  background: color-mix(in srgb, var(--graph-affected) 8%, transparent);
+}
+.graph-playback input {
+  width: 0;
+  min-width: 32px;
+  flex: 1;
+  height: 3px;
+  margin: 0 7px;
+  padding: 0;
+  appearance: none;
+  outline: none;
+  border: 0;
+  box-shadow: none;
+  border-radius: 3px;
+  background: var(--graph-border);
+  accent-color: var(--graph-affected);
+  cursor: pointer;
+}
+.graph-playback input::-webkit-slider-thumb {
+  appearance: none;
+  width: 8px;
+  height: 8px;
+  background: var(--graph-affected);
+  border-radius: 50%;
+}
+.graph-playback input:focus-visible {
+  outline: 2px solid var(--graph-accent);
+  outline-offset: 4px;
+}
+.graph-step-count {
+  font-family: 'Consolas', monospace;
+  font-size: 11px;
+  min-width: 36px;
+  color: var(--graph-affected);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.graph-step-count span {
+  color: var(--graph-muted);
+}
+.graph-playback-done {
+  display: flex;
+  width: 25px;
+  justify-content: center;
+  color: var(--graph-accent);
+}
+.graph-bottom-note {
+  position: absolute;
+  left: 20px;
+  bottom: 25px;
+  color: var(--graph-muted);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 10px;
+  pointer-events: none;
+}
+.graph-bottom-note button {
+  gap: 4px;
+  pointer-events: auto;
+  color: var(--graph-accent);
+  font-size: 10px;
+}
+.graph-empty {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  color: var(--graph-muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .graph-scene * {
+    transition: none !important;
+  }
+}

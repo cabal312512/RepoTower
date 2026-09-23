@@ -1,0 +1,7 @@
+@import url('./theme.css');
+.dock-unavailable {
+  max-width: 145px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--muted);
+}
