@@ -1,3 +1,4 @@
+import './test-env.mjs';
 import { _electron as electron } from 'playwright-core';
 import fs from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';

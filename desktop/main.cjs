@@ -24,6 +24,21 @@ app.setAppLogsPath(path.join(runtimeRoot, 'logs'));
 process.env.TEMP = app.getPath('temp');
 process.env.TMP = app.getPath('temp');
 process.env.TMPDIR = app.getPath('temp');
+if (process.platform === 'linux') {
+  // Linux Unix-domain sockets have a 108-byte pathname limit. A private short
+  // alias keeps Chromium's socket path short while its bytes stay beside the app.
+  const aliasRoot = fs.mkdtempSync('/tmp/repotower-');
+  const alias = path.join(aliasRoot, 't');
+  fs.symlinkSync(app.getPath('temp'), alias, 'dir');
+  process.env.TMPDIR = alias;
+  const removeAlias = () => {
+    try { fs.unlinkSync(alias); } catch { /* Already removed. */ }
+    try { fs.rmdirSync(aliasRoot); } catch { /* Never remove unexpected files. */ }
+  };
+  app.once('will-quit', () => app.releaseSingleInstanceLock());
+  app.once('quit', removeAlias);
+  process.once('exit', removeAlias);
+}
 process.env.XDG_CACHE_HOME = path.join(runtimeRoot, 'cache');
 process.env.XDG_CONFIG_HOME = path.join(runtimeRoot, 'config');
 app.commandLine.appendSwitch('disable-background-networking');

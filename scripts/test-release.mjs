@@ -1,10 +1,15 @@
+import './test-env.mjs';
 import { _electron as electron } from 'playwright-core';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import { root, packageRoot } from './release-utils.mjs';
 
-const results = path.join(root, 'test-results');
+const results = path.join(
+  root,
+  'test-results',
+  ...(process.platform === 'linux' ? ['deep-portable-location-'.repeat(6)] : []),
+);
 await fs.mkdir(results, { recursive: true });
 const data = await fs.mkdtemp(path.join(results, 'release-profile-'));
 const executable =
@@ -20,6 +25,7 @@ const app = await electron.launch({
 });
 const errors = [],
   requests = [];
+let linuxAlias;
 try {
   const page = await app.firstWindow();
   page.on('pageerror', (error) => errors.push(error.message));
@@ -37,6 +43,11 @@ try {
     ),
   );
   for (const directory of directories) assert.ok(directory.startsWith(data + path.sep), directory);
+  if (process.platform === 'linux') {
+    linuxAlias = await app.evaluate(() => process.env.TMPDIR);
+    assert.ok(Buffer.byteLength(linuxAlias) < 60);
+    assert.equal(await fs.realpath(linuxAlias), path.join(data, 'runtime-data', 'tmp'));
+  }
   await page.getByTestId('open-demo').click();
   await page.getByTestId('workspace').waitFor({ timeout: 60000 });
   assert.equal(await page.getByTestId('graph-node').count(), 23);
@@ -70,3 +81,12 @@ try {
 } finally {
   await app.close();
 }
+if (linuxAlias)
+  assert.equal(
+    await fs.stat(path.dirname(linuxAlias)).then(
+      () => true,
+      () => false,
+    ),
+    false,
+    'The temporary socket alias must be removed after exit',
+  );

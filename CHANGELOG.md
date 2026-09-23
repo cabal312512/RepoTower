@@ -9,6 +9,7 @@ First public GitHub release.
 - Windows single-download EXE with adjacent extraction cache, integrity checks and local settings.
 - MIT license, English and Chinese documentation, source archives and SHA-256 checksums.
 - Automated native tests, packaging and versioned GitHub releases.
+- Linux deep-directory startup support without relocating application data.
 
 ## 0.4.0
 

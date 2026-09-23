@@ -1,3 +1,4 @@
+import './test-env.mjs';
 import { _electron as electron } from 'playwright-core';
 import { createRequire } from 'node:module';
 import { mkdir, writeFile, readdir, readFile } from 'node:fs/promises';

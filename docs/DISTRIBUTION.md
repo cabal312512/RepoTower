@@ -18,6 +18,8 @@ Choose `arm64` for Apple Silicon or `x64` for Intel. Extract into a writable loc
 
 Extract the `.tar.gz` and run `./RepoTower`. Use a writable folder and retain executable permissions. Builds use Ubuntu 22.04 with native GTK 3, NSS, ALSA and GBM libraries available. A minimal server environment needs these desktop libraries and a display server; it is not a supported GUI runtime out of the box.
 
+Linux creates a private, temporary `/tmp/repotower-*` alias to the adjacent temporary directory so Chromium's Unix socket stays within the OS pathname limit. Actual temporary data remains beside the app. The alias is removed on normal exit; an abrupt termination may leave an empty alias directory for the OS to clean up.
+
 ## Verify a download
 
 Compare your result with the matching filename in `SHA256SUMS.txt`:
